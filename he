@@ -1,0 +1,39 @@
+/**
+ * Enableds intern coverage by merging out.json files for istanbul
+ */
+export function enableCoverage() {
+  return function() {
+    return this.parent
+    // Download window.__coverage__ from browser
+      .execute(function() {
+        //@ts-ignore
+        return window.__coverage__;
+      })
+
+      .then(function(coverageOutput) {
+        if (coverageOutput) {
+          console.log("Coverage output found");
+
+          let outJsonPath = path.resolve("./.nyc_output/out.json");
+          let nycOutputObj: { [index: string]: any } = {};
+          try {
+            //@ts-ignore
+            nycOutputObj = JSON.parse(fs.readFileSync(outJsonPath));
+            console.log("Existing .nyc_output/out.json found");
+          } catch(e) {
+          }
+
+          // Collapse window.__coverage__ onto .nyc_output/out.json
+          Object.assign(nycOutputObj, coverageOutput);
+
+          // Save collapsed output to .nyc_output/out.json
+          try { 
+            fs.mkdirSync("./.nyc_output", { recursive: true });
+            fs.writeFileSync(outJsonPath, JSON.stringify(nycOutputObj));
+            console.log("New .nyc_output/out.json written");
+          } catch(e) {
+          }
+        }
+      })
+  }
+}
